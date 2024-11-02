@@ -47,8 +47,8 @@ if __name__ == '__main__':
 
     GPIO.setmode(GPIO.BCM)
 
-    big_unit_channel_A = Unit(2, 3, 1)
-    big_unit_channel_B = Unit(14, 15, 1)
+    big_unit_channel_A = Unit(3, 15, 1)
+    big_unit_channel_B = Unit(27, 24, 1)
 
     little_unit_channel_A = Unit(17, 27, 1)
     little_unit_channel_B = Unit(23, 24, 1)
