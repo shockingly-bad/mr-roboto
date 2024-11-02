@@ -3,41 +3,52 @@ from flask import Flask
 
 app = Flask(__name__)
 
+class Unit:
+    def __init__(self, up_bcm, down_bcm, initial_out):
+        self.intensity = 0
+
+        self.up_bcm = up_bcm
+        self.down_bcm = down_bcm
+        self.initial_out = initial_out
+
+        # setup the up and down pins for the tens unit
+        GPIO.setup(self.up_bcm, GPIO.out, initial=self.initial_out)
+        GPIO.setup(self.up_bcm, GPIO.out, initial=self.initial_out)
+
+    def reset_intensity():
+        pass
+
+
 @app.route('/')
 def index():
     return 'Welcome to MR ROBOTO'
 
 # big unit has big_unit_1 and big_unit_2
-@app.route('big_unit_1')
-def big_unit_1():
-    pass
+@app.route('/big_unit_A')
+def big_unit_A(intensity):
+    big_unit_channel_A.reset_intensity()
 
-@app.route('big_unit_2')
-def big_unit_2():
-    pass
+@app.route('/big_unit_B')
+def big_unit_B(intensity):
+    big_unit_channel_B.reset_intensity()
 
 # little unit has little_unit_1 and little_unit_2
-@app.route('little_unit_1')
-def big_unit_1():
-    pass
+@app.route('/little_unit_A')
+def little_unit_A(intensity):
+    little_unit_channel_A.reset_intensity()
 
-@app.route('little_unit_2')
-def big_unit_2():
-    pass
+@app.route('/little_unit_B')
+def little_unit_B(intensity):
+    little_unit_B.reset_intensity()
 
-@app.route('initialise')
-def initialise():
-    GPIO.setmode(GPIO.BCM)
-
-    GPIO.setup(2, GPIO.out, initial=1)  # big unit channel A up
-    GPIO.setup(3, GPIO.out, initial=1)  # big unit channel A down
-    GPIO.setup(14, GPIO.out, initial=1)  # big unit channel B up
-    GPIO.setup(15, GPIO.out, initial=1)  # big unit channel B down
-
-    GPIO.setup(17, GPIO.out, initial=1)  # little unit channel A up
-    GPIO.setup(27, GPIO.out, initial=1)  # little unit channel A down
-    GPIO.setup(23, GPIO.out, initial=1)  # little unit channel B up
-    GPIO.setup(24, GPIO.out, initial=1)  # little unit channel B down
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
+
+    GPIO.setmode(GPIO.BCM)
+
+    big_unit_channel_A = Unit(2, 3, 1)
+    big_unit_channel_B = Unit(14, 15, 1)
+
+    little_unit_channel_A = Unit(17, 27, 1)
+    little_unit_channel_B = Unit(23, 24, 1)
