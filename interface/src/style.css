@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.selected {
+  @apply bg-gray-800 select-shadow
+}
+
+.select-shadow {
+  box-shadow: 4px 4px 0 rgba(54, 86, 130, 0.8);
+}
+
+.text-shadow {
+  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+}
