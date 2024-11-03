@@ -1,8 +1,7 @@
 import "./styles.css";
 
 const API_KEY = "bobthekiller!";
-const URL_A = "https://3fb7-131-111-5-193.ngrok-free.app/";
-const URL_B = ""
+const URL = "https://cf29-131-111-5-193.ngrok-free.app/";
 const MAX_ARM_INTENSITY = 14;
 const MAX_LEG_INTENSITY = 14;
 
@@ -37,8 +36,7 @@ function debounce(func: (...args: any[]) => void, wait: number) {
 
 // const debouncedLog = debounce(console.log, 500);
 const createDebounce = (channel: string) => debounce(async (value: number) => {
-  const URL = (channel == "A") ? URL_A : URL_B
-  await fetch(`${URL}big_unit_${channel}?intensity=${value}`, {headers: {"Authorization": API_KEY}});
+  await fetch(`${URL}${synced ? `interleave` : `big_unit_${channel}`}?intensity=${value}`, {headers: {"Authorization": API_KEY}});
 }, 150);
 
 const debouncedSendA = createDebounce("A");
@@ -83,14 +81,14 @@ const addArms = () => {
   leftArm.arm.addEventListener("mousedown", (event) => {
     leftArm.mousedown(leftArm.arm, event, true);
     if (synced) {
-      rightArm.mousedown(rightArm.arm, event, false);
+      rightArm.mousedown(rightArm.arm, event, false, leftArm.getCurrentRotation());
     }
   });
 
   rightArm.arm.addEventListener("mousedown", (event) => {
     rightArm.mousedown(rightArm.arm, event, false);
     if (synced) {
-      leftArm.mousedown(leftArm.arm, event, true);
+      leftArm.mousedown(leftArm.arm, event, true, rightArm.getCurrentRotation());
     }
   });
 
@@ -142,7 +140,7 @@ function createArm(isLeftArm: boolean) {
   arm.style.transform = `rotate(${currentRotation}deg)`;
   limbs?.appendChild(arm);
 
-  function mousemove (arm: HTMLDivElement, event: MouseEvent, isLeftArm: boolean) {
+  function mousemove(arm: HTMLDivElement, event: MouseEvent, isLeftArm: boolean) {
     if (moving) {
       const deltaY = initialMouseY - event.clientY; // Inverted calculation for swinging directio
 
@@ -158,20 +156,24 @@ function createArm(isLeftArm: boolean) {
       if (isLeftArm) {
         debouncedSendA(mappedValue);
       } else {
-        debouncedSendB(mappedValue);
+        if (!synced) debouncedSendB(mappedValue);
       }
     }
   }
 
-  function mousedown(arm: HTMLDivElement, event: MouseEvent, isLeftArm: boolean) {
+  function mousedown(arm: HTMLDivElement, event: MouseEvent, isLeftArm: boolean, initialCurrentRotation?: number) {
       event.preventDefault();
       arm.classList.add("limb-active");
       arm.style.cursor = "grabbing";
       moving = true;
       initialMouseY = event.clientY;
 
-      currentRotation = parseFloat(arm.style.transform.replace('rotate(', '').replace('deg)', '')) * (isLeftArm ? 1 : -1);
-  };
+      if (initialCurrentRotation) {
+        currentRotation = initialCurrentRotation;
+      } else {
+        currentRotation = parseFloat(arm.style.transform.replace('rotate(', '').replace('deg)', '')) * (isLeftArm ? 1 : -1);
+      }
+    };
 
   document.addEventListener("mouseup", (event) => {  
       event.preventDefault();
@@ -193,7 +195,11 @@ function createArm(isLeftArm: boolean) {
     return moving;
   }
 
-  return {arm, mousemove, mousedown, moving, getMoving, setMoving};
+  function getCurrentRotation() {
+    return currentRotation;
+  }
+
+  return {arm, mousemove, mousedown, moving, getMoving, setMoving, getCurrentRotation};
 }
 
 function createLeg(isLeftLeg: boolean) {
@@ -259,7 +265,11 @@ function createLeg(isLeftLeg: boolean) {
     return moving;
   }
 
-  return {leg, mousemove, mousedown, moving, getMoving, setMoving};
+  function getCurrentRotation() {
+    return currentRotation;
+  }
+
+  return {leg, mousemove, mousedown, moving, getMoving, setMoving, getCurrentRotation};
 }
 
 
