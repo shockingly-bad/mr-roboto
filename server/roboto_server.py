@@ -26,8 +26,8 @@ class Unit:
     def get_intensity(self):
         return self.intensity
 
-    def reset_intensity(self):
-        for i in range(self.intensity + 2):
+    def safety_zero(self):
+        for i in range(self.intensity + 5):
             GPIO.output(self.down_bcm, 0)
             sleep(0.05)
             GPIO.output(self.down_bcm, 1)
@@ -35,14 +35,23 @@ class Unit:
 
         self.intensity = 0
 
-    def increase_intensity(self, intensity):
-        for i in range(intensity):
+    def increase_intensity(self, difference):
+        for i in range(difference):
             GPIO.output(self.up_bcm, 0)
             sleep(0.05)
             GPIO.output(self.up_bcm, 1)
             sleep(0.05)
 
-        self.intensity = intensity
+        self.intensity += difference
+
+    def decrease_intensity(self, difference):
+        for i in range(difference):
+            GPIO.output(self.down_bcm, 0)
+            sleep(0.05)
+            GPIO.output(self.down_bcm, 1)
+            sleep(0.05)
+
+        self.intensity -= difference
 
 
 big_unit_channel_A = Unit(3, 15, 1)
@@ -60,10 +69,18 @@ def big_unit_A():
     if request.headers.get("Authorization") != API_KEY:
         return "Invalid API Key"
 
-    intensity = int(request.args.get("intensity"))
+    current_intensity = big_unit_channel_A.get_intensity()
+    new_intensity = int(request.args.get("intensity"))
 
-    big_unit_channel_A.reset_intensity()
-    big_unit_channel_A.increase_intensity(intensity)
+    difference = new_intensity - current_intensity
+
+    if difference == 0:
+        big_unit_channel_A.safety_zero()
+    elif difference > 0:
+        big_unit_channel_A.increase_intensity(difference)
+    else:
+        difference = abs(difference)
+        big_unit_channel_A.decrease_intensity(difference)
 
     return "A"
 
@@ -73,10 +90,18 @@ def big_unit_B():
     if request.headers.get("Authorization") != API_KEY:
         return "Invalid API Key"
 
-    intensity = int(request.args.get("intensity"))
+    current_intensity = big_unit_channel_B.get_intensity()
+    new_intensity = int(request.args.get("intensity"))
 
-    big_unit_channel_B.reset_intensity()
-    big_unit_channel_B.increase_intensity(intensity)
+    difference = new_intensity - current_intensity
+
+    if new_intensity == 0:
+        big_unit_channel_B.safety_zero()
+    elif difference > 0:
+        big_unit_channel_B.increase_intensity(difference)
+    else:
+        difference = abs(difference)
+        big_unit_channel_B.decrease_intensity(difference)
 
     return "B"
 
