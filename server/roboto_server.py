@@ -1,8 +1,10 @@
 import RPi.GPIO as GPIO
 from flask import Flask, request
+from flask_cors import CORS
 from time import sleep
 
 app = Flask(__name__)
+CORS(app)
 
 GPIO.setmode(GPIO.BCM)
 
@@ -55,7 +57,7 @@ def index():
 # big unit has big_unit_1 and big_unit_2
 @app.route("/big_unit_A")
 def big_unit_A():
-    if request.headers.get("api_key") != API_KEY:
+    if request.headers.get("Authorization") != API_KEY:
         return "Invalid API Key"
 
     intensity = int(request.args.get("intensity"))
