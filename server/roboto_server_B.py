@@ -8,7 +8,7 @@ CORS(app)
 
 API_KEY = "bobthekiller!"
 
-big_unit_channel_B = Unit(27, 24, 1)
+big_unit_channel_B = Unit(27, 24, 1, 0.07)
 
 
 @app.route("/")
