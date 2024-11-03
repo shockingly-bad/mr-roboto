@@ -1,4 +1,4 @@
-import "./controller.css";
+import "./styles.css";
 
 // Select the buttons and initialize variables for robot state
 const arms = document.querySelector<HTMLButtonElement>("#arms");
