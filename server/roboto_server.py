@@ -63,7 +63,7 @@ def index():
     return "Welcome to MR ROBOTO"
 
 
-# big unit has big_unit_1 and big_unit_2
+# big unit has big_unit_A and big_unit_B channels
 @app.route("/big_unit_A")
 def big_unit_A():
     if request.headers.get("Authorization") != API_KEY:

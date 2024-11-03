@@ -1,7 +1,8 @@
 import "./styles.css";
 
 const API_KEY = "bobthekiller!";
-const URL = "https://3fb7-131-111-5-193.ngrok-free.app/";
+const URL_A = "https://3fb7-131-111-5-193.ngrok-free.app/";
+const URL_B = ""
 const MAX_ARM_INTENSITY = 14;
 const MAX_LEG_INTENSITY = 14;
 
@@ -36,6 +37,7 @@ function debounce(func: (...args: any[]) => void, wait: number) {
 
 // const debouncedLog = debounce(console.log, 500);
 const createDebounce = (channel: string) => debounce(async (value: number) => {
+  const URL = (channel == "A") ? URL_A : URL_B
   await fetch(`${URL}big_unit_${channel}?intensity=${value}`, {headers: {"Authorization": API_KEY}});
 }, 150);
 
