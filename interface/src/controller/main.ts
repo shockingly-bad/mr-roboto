@@ -1,5 +1,10 @@
 import "./styles.css";
 
+const API_KEY = "bobthekiller!";
+const URL = "https://abde-131-111-5-193.ngrok-free.app/";
+const MAX_ARM_INTENSITY = 14;
+const MAX_LEG_INTENSITY = 14;
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
@@ -8,7 +13,34 @@ function mapValue(value: number, fromMin: number, fromMax: number, toMin: number
   return toMin + ((value - fromMin) * (toMax - toMin)) / (fromMax - fromMin);
 }
 
-const API_KEY = "bobthekiller!";
+function debounce(func: (...args: any[]) => void, wait: number) {
+  let timeout: number;
+
+  return function (this: any, ...args: any[]) {
+      const context = this;
+
+      if (timeout) {
+          clearTimeout(timeout);
+      }
+      timeout = setTimeout(() => func.apply(context, args), wait);
+  };
+}
+
+let requestInProgress = false;
+async function sendRequest(value: any, channel: any) {
+  if (requestInProgress) return; // Prevent sending if a request is already in progress
+  requestInProgress = true; // Set flag to indicate a request is in progress
+
+  // Simulate an API request (using a timeout to mimic network delay)
+  return new Promise<void>(async (resolve) => {
+      await fetch(`${URL}big_unit_${channel}?intensity=${value}`, {headers: {"Authorization": API_KEY}});
+      requestInProgress = false;
+      resolve();
+  });
+}
+
+// const debouncedLog = debounce(console.log, 500);
+const debouncedSend = debounce((value, channel) => sendRequest(value, channel), 500);
 
 // Select the buttons and initialize variables for robot state
 const arms = document.querySelector<HTMLButtonElement>("#arms");
@@ -85,6 +117,8 @@ function createArm(isLeftArm: boolean) {
         );
 
         arm.style.transform = `rotate(${newRotation * (isLeftArm ? 1 : -1)}deg)`; // Invert angle for right arm
+        let mappedValue = Math.floor(mapValue(newRotation, -45, 45, 0, MAX_ARM_INTENSITY));
+        debouncedSend(mappedValue, isLeftArm ? "A" : "B");
       }
   });
 
@@ -107,7 +141,8 @@ function createLeg(isLeftLeg: boolean) {
   const leg = document.createElement("div");
   let moving = false;
   let initialMouseY = 0;
-  let currentRotation = isLeftLeg ? -45 : 45; // Left leg starts at -45, right leg at 45
+  let initialRotation = isLeftLeg ? -45 : 45; // Left leg starts at -45, right leg at 45
+  let currentRotation = initialRotation; // Set the initial rotation
 
   // Configure the initial rotation and pivot point
   leg.classList.add("limb");
@@ -121,6 +156,8 @@ function createLeg(isLeftLeg: boolean) {
       leg.style.cursor = "grabbing";
       moving = true;
       initialMouseY = event.clientY;
+
+      currentRotation = parseFloat(leg.style.transform.replace('rotate(', '').replace('deg)', '')) * (isLeftLeg ? 1 : -1);
   });
 
   document.addEventListener("mousemove", (event) => {
@@ -135,6 +172,8 @@ function createLeg(isLeftLeg: boolean) {
           );
 
           leg.style.transform = `rotate(${newRotation * (isLeftLeg ? 1 : -1)}deg)`; // Invert angle for right leg
+          let mappedValue = Math.floor(mapValue(newRotation, -45, 45, 0, MAX_LEG_INTENSITY));
+          debouncedSend(mappedValue, isLeftLeg ? "A" : "B");
       }
   });
 
@@ -145,12 +184,13 @@ function createLeg(isLeftLeg: boolean) {
 
       leg.classList.remove("limb-active");
 
-      // Update currentRotation with the final rotation
       currentRotation = parseFloat(leg.style.transform.replace('rotate(', '').replace('deg)', '')) * (isLeftLeg ? 1 : -1);
-  });
+    });
 
   return leg;
 }
+
+
 
 // Add event listeners for the buttons
 arms?.addEventListener("click", toggle);
