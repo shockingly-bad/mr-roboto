@@ -8,6 +8,8 @@ function mapValue(value: number, fromMin: number, fromMax: number, toMin: number
   return toMin + ((value - fromMin) * (toMax - toMin)) / (fromMax - fromMin);
 }
 
+const API_KEY = "bobthekiller!";
+
 // Select the buttons and initialize variables for robot state
 const arms = document.querySelector<HTMLButtonElement>("#arms");
 const legs = document.querySelector<HTMLButtonElement>("#legs");

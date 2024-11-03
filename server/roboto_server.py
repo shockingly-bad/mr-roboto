@@ -6,6 +6,9 @@ app = Flask(__name__)
 
 GPIO.setmode(GPIO.BCM)
 
+API_KEY = "bobthekiller!"
+
+
 class Unit:
     def __init__(self, up_bcm, down_bcm, initial_out):
         self.intensity = 0
@@ -27,29 +30,35 @@ class Unit:
             sleep(0.05)
             GPIO.output(self.down_bcm, 1)
             sleep(0.05)
-    
+
         self.intensity = 0
-    
+
     def increase_intensity(self, intensity):
         for i in range(intensity):
             GPIO.output(self.up_bcm, 0)
             sleep(0.05)
             GPIO.output(self.up_bcm, 1)
             sleep(0.05)
-        
+
         self.intensity = intensity
+
 
 big_unit_channel_A = Unit(3, 15, 1)
 big_unit_channel_B = Unit(27, 24, 1)
 
-@app.route('/')
+
+@app.route("/")
 def index():
-    return 'Welcome to MR ROBOTO'
+    return "Welcome to MR ROBOTO"
+
 
 # big unit has big_unit_1 and big_unit_2
-@app.route('/big_unit_A')
+@app.route("/big_unit_A")
 def big_unit_A():
-    intensity = int(request.args.get('intensity'))
+    if request.headers.get("api_key") != API_KEY:
+        return "Invalid API Key"
+
+    intensity = int(request.args.get("intensity"))
 
     big_unit_channel_A.reset_intensity()
     big_unit_channel_A.increase_intensity(intensity)
@@ -57,17 +66,18 @@ def big_unit_A():
     return "A"
 
 
-@app.route('/big_unit_B')
+@app.route("/big_unit_B")
 def big_unit_B():
-    intensity = int(request.args.get('intensity'))
-    
+    if request.headers.get("api_key") != API_KEY:
+        return "Invalid API Key"
+
+    intensity = int(request.args.get("intensity"))
+
     big_unit_channel_B.reset_intensity()
-    big_unit_channel_B.increase_intensity(difference)
+    big_unit_channel_B.increase_intensity(intensity)
 
     return "B"
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
-
-    
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
