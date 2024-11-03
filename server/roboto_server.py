@@ -10,8 +10,6 @@ GPIO.setmode(GPIO.BCM)
 
 API_KEY = "bobthekiller!"
 
-SAFETY_DOWN_NUMBER = 20
-
 
 class Unit:
     def __init__(self, up_bcm, down_bcm, initial_out):
@@ -29,7 +27,7 @@ class Unit:
         return self.intensity
 
     def safety_zero(self):
-        for i in range(SAFETY_DOWN_NUMBER):
+        for i in range(self.intensity + 5):
             GPIO.output(self.down_bcm, 0)
             sleep(0.05)
             GPIO.output(self.down_bcm, 1)
@@ -76,7 +74,7 @@ def big_unit_A():
 
     difference = new_intensity - current_intensity
 
-    if new_intensity == 0:
+    if difference == 0:
         big_unit_channel_A.safety_zero()
     elif difference > 0:
         big_unit_channel_A.increase_intensity(difference)
