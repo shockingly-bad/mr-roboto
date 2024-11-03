@@ -70,7 +70,7 @@ def big_unit_A():
 
 @app.route("/big_unit_B")
 def big_unit_B():
-    if request.headers.get("api_key") != API_KEY:
+    if request.headers.get("Authorization") != API_KEY:
         return "Invalid API Key"
 
     intensity = int(request.args.get("intensity"))
