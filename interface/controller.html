@@ -5,7 +5,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
 
-    <link href="/src/controller/styles.css" rel="stylesheet">
+    <link rel="preload" href="/armless.png" as="image">
+    <link rel="preload" href="/legless.png" as="image">
 
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
@@ -15,8 +16,8 @@
   <body>
     <div id="app" class="bg-red-50 overflow-y-hidden h-screen flex font-robot bg-center bg-[url('/factory.jpg')] bg-cover flex-col gap-10 max-h-screen">
       <div class="mx-auto mt-16 flex sm:text-xl md:text-4xl lg:text-3xl text-white"> 
-        <div id="arms" class="py-3 px-6 h-fit selected cursor-pointer text-center text-shadow">ARMS</div>
-        <div id="legs" class="py-3 px-6 h-fit unselected cursor-pointer text-center text-shadow">LEGS</div>
+        <div id="arms" class="py-3 px-6 h-fit selected cursor-pointer text-center text-shadow transition-all">ARMS</div>
+        <div id="legs" class="py-3 px-6 h-fit unselected cursor-pointer text-center text-shadow transition-all">LEGS</div>
       </div>
       <div class="mx-auto flex-grow h-auto w-full relative">
         <div id="limbs" class="w-full h-full"></div>

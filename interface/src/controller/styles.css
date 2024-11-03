@@ -14,6 +14,41 @@
   text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
 }
 
-.arm {
-  @apply w-28 h-4 bg-black rounded-full z-50 absolute
+.limb {
+  @apply w-32 h-5 bg-red-700 rounded-full z-50 absolute cursor-grab;
+  transition: 0.15s outline-width;
+  outline-color: white;
+  outline-style: solid;
+  outline-width: 0px;
+}
+
+.limb:hover, .limb-active {
+  outline-width: 4px;
+}
+
+.limb::before {
+  content: "";
+  position: absolute;
+  top: -10px; /* Move up to create padding effect */
+  left: -10px; /* Move left to create padding effect */
+  right: -10px; /* Move right to create padding effect */
+  bottom: -10px; /* Move down to create padding effect */
+  background-color: transparent;
+  z-index: -1; /* Ensure it's behind the content */
+}
+
+.left-arm {
+  @apply left-1/2 -ml-36 top-1/2 -mb-3 origin-right;
+}
+
+.right-arm {
+  @apply left-1/2 -ml-4 top-1/2 -mb-3 origin-left;
+}
+
+.left-leg {
+  @apply left-1/2 -ml-36 top-3/4 -mt-8 origin-right;
+}
+
+.right-leg {
+  @apply left-1/2 -ml-4 top-3/4 -mt-8 origin-left;
 }
