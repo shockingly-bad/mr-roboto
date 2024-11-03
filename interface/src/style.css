@@ -13,3 +13,7 @@
 .text-shadow {
   text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
 }
+
+.arm {
+  @apply w-28 h-4 bg-black rounded-full z-50 absolute left-1/2
+}
