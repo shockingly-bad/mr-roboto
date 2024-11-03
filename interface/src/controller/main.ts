@@ -1,7 +1,7 @@
 import "./styles.css";
 
 const API_KEY = "bobthekiller!";
-const URL = "https://abde-131-111-5-193.ngrok-free.app/";
+const URL = "https://3fb7-131-111-5-193.ngrok-free.app/";
 const MAX_ARM_INTENSITY = 14;
 const MAX_LEG_INTENSITY = 14;
 
@@ -18,37 +18,39 @@ function debounce(func: (...args: any[]) => void, wait: number) {
 
   return function (this: any, ...args: any[]) {
       const context = this;
+      let requestInProgress = false;
 
       if (timeout) {
           clearTimeout(timeout);
       }
-      timeout = setTimeout(() => func.apply(context, args), wait);
+      timeout = setTimeout(async () => {
+        if (requestInProgress) return; // Prevent sending if a request is already in progress
+        requestInProgress = true; // Set flag to indicate a request is in progress
+
+        await func.apply(context, args); // Call the provided function with context and arguments
+
+        requestInProgress = false; // Reset the flag after request completes
+    }, wait);
   };
 }
 
-let requestInProgress = false;
-async function sendRequest(value: any, channel: any) {
-  if (requestInProgress) return; // Prevent sending if a request is already in progress
-  requestInProgress = true; // Set flag to indicate a request is in progress
-
-  // Simulate an API request (using a timeout to mimic network delay)
-  return new Promise<void>(async (resolve) => {
-      await fetch(`${URL}big_unit_${channel}?intensity=${value}`, {headers: {"Authorization": API_KEY}});
-      requestInProgress = false;
-      resolve();
-  });
-}
-
 // const debouncedLog = debounce(console.log, 500);
-const debouncedSend = debounce((value, channel) => sendRequest(value, channel), 500);
+const createDebounce = (channel: string) => debounce(async (value: number) => {
+  await fetch(`${URL}big_unit_${channel}?intensity=${value}`, {headers: {"Authorization": API_KEY}});
+}, 150);
+
+const debouncedSendA = createDebounce("A");
+const debouncedSendB = createDebounce("B");
 
 // Select the buttons and initialize variables for robot state
 const arms = document.querySelector<HTMLButtonElement>("#arms");
 const legs = document.querySelector<HTMLButtonElement>("#legs");
 const limbs = document.querySelector<HTMLDivElement>("#limbs");
 const robot = document.querySelector<HTMLImageElement>("#robot");
+const sync = document.querySelector<HTMLButtonElement>("#sync");
 
 let armsSelected = true;
+let synced = false;
 
 // Toggle function to switch images and reset position
 const toggle = () => {
@@ -63,25 +65,68 @@ const toggle = () => {
   armsSelected = !armsSelected;
 };
 
+const toggleSync = () => {
+  sync?.classList.toggle("sync-active");
+  synced = !synced;
+}
+
+
 const addArms = () => {
   const leftArm = createArm(true);
-  leftArm.classList.add("left-arm");
+  leftArm.arm.classList.add("left-arm");
 
   const rightArm = createArm(false);
-  rightArm.classList.add("right-arm");
+  rightArm.arm.classList.add("right-arm");
+
+  leftArm.arm.addEventListener("mousedown", (event) => {
+    leftArm.mousedown(leftArm.arm, event, true);
+    if (synced) {
+      rightArm.mousedown(rightArm.arm, event, false);
+    }
+  });
+
+  rightArm.arm.addEventListener("mousedown", (event) => {
+    rightArm.mousedown(rightArm.arm, event, false);
+    if (synced) {
+      leftArm.mousedown(leftArm.arm, event, true);
+    }
+  });
+
+  document.addEventListener("mousemove", (event: MouseEvent) => {
+    leftArm.mousemove(leftArm.arm, event, true);
+    rightArm.mousemove(rightArm.arm, event, false);
+  });
 }
 
 const addLegs = () => {
   const leftLeg = createLeg(true);
-  leftLeg.classList.add("left-leg");
+  leftLeg.leg.classList.add("left-leg");
 
   const rightLeg = createLeg(false);
-  rightLeg.classList.add("right-leg");
+  rightLeg.leg.classList.add("right-leg");
+
+  leftLeg.leg.addEventListener("mousedown", (event) => {
+    leftLeg.mousedown(leftLeg.leg, event, true);
+    if (synced) {
+      rightLeg.mousedown(rightLeg.leg, event, false);
+    }
+  });
+
+  rightLeg.leg.addEventListener("mousedown", (event) => {
+    rightLeg.mousedown(rightLeg.leg, event, false);
+    if (synced) {
+      leftLeg.mousedown(leftLeg.leg, event, true);
+    }
+  });
+
+  document.addEventListener("mousemove", (event: MouseEvent) => {
+    leftLeg.mousemove(leftLeg.leg, event, true);
+    rightLeg.mousemove(rightLeg.leg, event, false);
+  });
 }
 
 const removeLimbs = () => 
   document.querySelector("#limbs")!.innerHTML = "";
-
 
 function createArm(isLeftArm: boolean) {
   const arm = document.createElement("div");
@@ -95,7 +140,28 @@ function createArm(isLeftArm: boolean) {
   arm.style.transform = `rotate(${currentRotation}deg)`;
   limbs?.appendChild(arm);
 
-  arm.addEventListener("mousedown", (event) => {  
+  function mousemove (arm: HTMLDivElement, event: MouseEvent, isLeftArm: boolean) {
+    if (moving) {
+      const deltaY = initialMouseY - event.clientY; // Inverted calculation for swinging directio
+
+      // Adjust rotation based on arm side
+      const newRotation = clamp(
+          currentRotation + deltaY * 0.2, 
+          isLeftArm ? -45 : -45, // Minimum rotation
+          isLeftArm ? 45 : 45   // Maximum rotation
+      );
+
+      arm.style.transform = `rotate(${newRotation * (isLeftArm ? 1 : -1)}deg)`; // Invert angle for right arm
+      let mappedValue = Math.floor(mapValue(newRotation, -45, 45, 0, MAX_ARM_INTENSITY));
+      if (isLeftArm) {
+        debouncedSendA(mappedValue);
+      } else {
+        debouncedSendB(mappedValue);
+      }
+    }
+  }
+
+  function mousedown(arm: HTMLDivElement, event: MouseEvent, isLeftArm: boolean) {
       event.preventDefault();
       arm.classList.add("limb-active");
       arm.style.cursor = "grabbing";
@@ -103,24 +169,7 @@ function createArm(isLeftArm: boolean) {
       initialMouseY = event.clientY;
 
       currentRotation = parseFloat(arm.style.transform.replace('rotate(', '').replace('deg)', '')) * (isLeftArm ? 1 : -1);
-  });
-
-  document.addEventListener("mousemove", (event) => {
-      if (moving) {
-        const deltaY = initialMouseY - event.clientY; // Inverted calculation for swinging direction
-
-        // Adjust rotation based on arm side
-        const newRotation = clamp(
-            currentRotation + deltaY * 0.2, 
-            isLeftArm ? -45 : -45, // Minimum rotation
-            isLeftArm ? 45 : 45   // Maximum rotation
-        );
-
-        arm.style.transform = `rotate(${newRotation * (isLeftArm ? 1 : -1)}deg)`; // Invert angle for right arm
-        let mappedValue = Math.floor(mapValue(newRotation, -45, 45, 0, MAX_ARM_INTENSITY));
-        debouncedSend(mappedValue, isLeftArm ? "A" : "B");
-      }
-  });
+  };
 
   document.addEventListener("mouseup", (event) => {  
       event.preventDefault();
@@ -134,7 +183,15 @@ function createArm(isLeftArm: boolean) {
       currentRotation = parseFloat(arm.style.transform.replace('rotate(', '').replace('deg)', '')) * (isLeftArm ? 1 : -1);
   });
 
-  return arm;
+  function setMoving(value: boolean) {
+    moving = value;
+  }
+
+  function getMoving() {
+    return moving;
+  }
+
+  return {arm, mousemove, mousedown, moving, getMoving, setMoving};
 }
 
 function createLeg(isLeftLeg: boolean) {
@@ -149,45 +206,58 @@ function createLeg(isLeftLeg: boolean) {
   leg.style.transform = `rotate(${currentRotation}deg)`;
   limbs?.appendChild(leg);
 
-  leg.addEventListener("mousedown", (event) => {  
-      event.preventDefault();
+  function mousemove (leg: HTMLDivElement, event: MouseEvent, isLeftLeg: boolean) {
+    if (moving) {
+      const deltaY = initialMouseY - event.clientY; // Inverted calculation for swinging directio
 
+      // Adjust rotation based on leg side
+      const newRotation = clamp(
+          currentRotation + deltaY * 0.2, 
+          isLeftLeg ? -45 : -45, // Minimum rotation
+          isLeftLeg ? 45 : 45   // Maximum rotation
+      );
+
+      leg.style.transform = `rotate(${newRotation * (isLeftLeg ? 1 : -1)}deg)`; // Invert angle for right leg
+      let mappedValue = Math.floor(mapValue(newRotation, -45, 45, 0, MAX_LEG_INTENSITY));
+      if (isLeftLeg) {
+        debouncedSendA(mappedValue);
+      } else {
+        debouncedSendB(mappedValue);
+      }
+    }
+  }
+
+  function mousedown(leg: HTMLDivElement, event: MouseEvent, isLeftLeg: boolean) {
+      event.preventDefault();
       leg.classList.add("limb-active");
       leg.style.cursor = "grabbing";
       moving = true;
       initialMouseY = event.clientY;
 
       currentRotation = parseFloat(leg.style.transform.replace('rotate(', '').replace('deg)', '')) * (isLeftLeg ? 1 : -1);
-  });
-
-  document.addEventListener("mousemove", (event) => {
-      if (moving) {
-          const deltaY = initialMouseY - event.clientY; // Inverted calculation for swinging direction
-
-          // Adjust rotation based on leg side
-          const newRotation = clamp(
-              currentRotation + deltaY * 0.3, 
-              isLeftLeg ? -45 : -45, // Minimum rotation
-              isLeftLeg ? 45 : 45   // Maximum rotation
-          );
-
-          leg.style.transform = `rotate(${newRotation * (isLeftLeg ? 1 : -1)}deg)`; // Invert angle for right leg
-          let mappedValue = Math.floor(mapValue(newRotation, -45, 45, 0, MAX_LEG_INTENSITY));
-          debouncedSend(mappedValue, isLeftLeg ? "A" : "B");
-      }
-  });
+  };
 
   document.addEventListener("mouseup", (event) => {  
       event.preventDefault();
-      leg.style.cursor = "grab";
-      moving = false;
 
       leg.classList.remove("limb-active");
 
-      currentRotation = parseFloat(leg.style.transform.replace('rotate(', '').replace('deg)', '')) * (isLeftLeg ? 1 : -1);
-    });
+      leg.style.cursor = "grab";
+      moving = false;
 
-  return leg;
+      // Update currentRotation with the final rotation
+      currentRotation = parseFloat(leg.style.transform.replace('rotate(', '').replace('deg)', '')) * (isLeftLeg ? 1 : -1);
+  });
+
+  function setMoving(value: boolean) {
+    moving = value;
+  }
+
+  function getMoving() {
+    return moving;
+  }
+
+  return {leg, mousemove, mousedown, moving, getMoving, setMoving};
 }
 
 
@@ -195,4 +265,5 @@ function createLeg(isLeftLeg: boolean) {
 // Add event listeners for the buttons
 arms?.addEventListener("click", toggle);
 legs?.addEventListener("click", toggle);
+sync?.addEventListener("click", toggleSync);
 addArms();

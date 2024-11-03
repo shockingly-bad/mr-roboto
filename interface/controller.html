@@ -15,9 +15,12 @@
   </head>
   <body>
     <div id="app" class="bg-red-50 overflow-y-hidden h-screen flex font-robot bg-center bg-[url('/factory.png')] bg-cover flex-col gap-10 max-h-screen">
-      <div class="mx-auto mt-16 flex sm:text-xl md:text-4xl lg:text-3xl text-white"> 
-        <div id="arms" class="py-3 px-6 h-fit selected cursor-pointer text-center text-shadow transition-all">ARMS</div>
-        <div id="legs" class="py-3 px-6 h-fit unselected cursor-pointer text-center text-shadow transition-all">LEGS</div>
+      <div class="mx-auto mt-16 flex flex-col text-white text-shadow"> 
+        <div class="flex sm:text-xl md:text-4xl lg:text-3xl">
+          <div id="arms" class="py-3 px-6 h-fit selected cursor-pointer text-center transition-all">ARMS</div>
+          <div id="legs" class="py-3 px-6 h-fit unselected cursor-pointer text-center transition-all">LEGS</div>
+        </div>
+        <div id="sync" class="flex mx-auto mt-5 p-1 cursor-pointer transition-all">SYNC LOCK</div>
       </div>
       <div class="mx-auto flex-grow h-auto w-full relative">
         <div id="limbs" class="w-full h-full"></div>

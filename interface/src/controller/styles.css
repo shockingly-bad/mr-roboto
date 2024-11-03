@@ -14,6 +14,10 @@
   text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
 }
 
+.sync-active {
+  @apply bg-gray-800 select-shadow;
+}
+
 .limb {
   @apply w-32 h-5 bg-red-700 rounded-full z-50 absolute cursor-grab;
   transition: 0.15s outline-width;
